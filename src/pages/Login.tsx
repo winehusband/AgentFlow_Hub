@@ -1,14 +1,35 @@
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 import { useNavigate } from "react-router-dom";
+import { useState } from "react";
 
 const Login = () => {
   const navigate = useNavigate();
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
 
-  const handleSignIn = () => {
-    // Placeholder for Microsoft sign-in - navigate to hubs page
-    console.log("Sign in button clicked (placeholder)");
-    navigate("/hubs");
+  const handleSignIn = (e: React.FormEvent) => {
+    e.preventDefault();
+    
+    // Check credentials and route accordingly
+    if (email === "sarah@example123.com" && password === "password123") {
+      localStorage.setItem("userRole", "client");
+      localStorage.setItem("userEmail", email);
+      navigate("/portal/overview");
+    } else if (email === "hamish@goagentflow.com" && password === "password123") {
+      localStorage.setItem("userRole", "staff");
+      localStorage.setItem("userEmail", email);
+      navigate("/hubs");
+    } else {
+      alert("Invalid credentials. Please use demo credentials.");
+    }
+  };
+
+  const fillDemoCredentials = (demoEmail: string, demoPassword: string) => {
+    setEmail(demoEmail);
+    setPassword(demoPassword);
   };
 
   return (
@@ -38,11 +59,11 @@ const Login = () => {
             </p>
           </div>
 
-          {/* Sign In Button */}
+          {/* Sign In Button - Illustrative Only */}
           <div className="space-y-4">
             <Button 
-              onClick={handleSignIn}
-              className="w-full h-14 text-lg font-semibold bg-gradient-to-r from-gradient-blue to-gradient-blue/90 hover:from-gradient-blue/90 hover:to-gradient-blue/80 text-white shadow-lg hover:shadow-xl transition-all duration-300 transform hover:scale-[1.02]"
+              disabled
+              className="w-full h-14 text-lg font-semibold bg-gradient-to-r from-gradient-blue to-gradient-blue/90 text-white shadow-lg opacity-60 cursor-not-allowed"
             >
               <svg 
                 className="w-6 h-6 mr-3" 
@@ -55,13 +76,82 @@ const Login = () => {
                 <path d="M11 12H0V23H11V12Z" fill="#00A4EF"/>
                 <path d="M23 12H12V23H23V12Z" fill="#FFB900"/>
               </svg>
-              Sign in with Microsoft
+              Sign in with Microsoft (Illustrative)
             </Button>
 
-            {/* Decorative divider */}
+            {/* OR Divider */}
             <div className="relative">
               <div className="absolute inset-0 flex items-center">
-                <div className="w-full border-t border-gradient-purple/20"></div>
+                <div className="w-full border-t border-[hsl(var(--gradient-purple))]/20"></div>
+              </div>
+              <div className="relative flex justify-center text-xs uppercase">
+                <span className="bg-white px-2 text-[hsl(var(--medium-grey))]">Or</span>
+              </div>
+            </div>
+
+            {/* Email/Password Form */}
+            <form onSubmit={handleSignIn} className="space-y-4">
+              <div className="space-y-2">
+                <Label htmlFor="email" className="text-[hsl(var(--dark-grey))]">Email</Label>
+                <Input
+                  id="email"
+                  type="email"
+                  placeholder="email@example.com"
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                  className="h-12"
+                  required
+                />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="password" className="text-[hsl(var(--dark-grey))]">Password</Label>
+                <Input
+                  id="password"
+                  type="password"
+                  placeholder="••••••••"
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                  className="h-12"
+                  required
+                />
+              </div>
+              <Button 
+                type="submit"
+                className="w-full h-12 text-base font-semibold bg-[hsl(var(--soft-coral))] hover:bg-[hsl(var(--soft-coral))]/90 text-white shadow-md hover:shadow-lg transition-all duration-300"
+              >
+                Sign In
+              </Button>
+            </form>
+
+            {/* Demo Credentials Section */}
+            <div className="pt-4 space-y-3">
+              <p className="text-sm text-[hsl(var(--medium-grey))] text-center font-medium">
+                Demo Credentials
+              </p>
+              <div className="grid gap-3">
+                {/* Client Demo */}
+                <Card 
+                  className="p-4 cursor-pointer hover:border-[hsl(var(--gradient-blue))] hover:shadow-md transition-all duration-200"
+                  onClick={() => fillDemoCredentials("sarah@example123.com", "password123")}
+                >
+                  <div className="space-y-1">
+                    <p className="text-sm font-semibold text-[hsl(var(--bold-royal-blue))]">Client Login</p>
+                    <p className="text-xs text-[hsl(var(--medium-grey))]">sarah@example123.com</p>
+                    <p className="text-xs text-[hsl(var(--medium-grey))]">password123</p>
+                  </div>
+                </Card>
+                
+                {/* Staff Demo */}
+                <Card 
+                  className="p-4 cursor-pointer hover:border-[hsl(var(--deep-navy))] hover:shadow-md transition-all duration-200"
+                  onClick={() => fillDemoCredentials("hamish@goagentflow.com", "password123")}
+                >
+                  <div className="space-y-1">
+                    <p className="text-sm font-semibold text-[hsl(var(--deep-navy))]">AgentFlow Staff</p>
+                    <p className="text-xs text-[hsl(var(--medium-grey))]">hamish@goagentflow.com</p>
+                    <p className="text-xs text-[hsl(var(--medium-grey))]">password123</p>
+                  </div>
+                </Card>
               </div>
             </div>
           </div>
