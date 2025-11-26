@@ -4,6 +4,7 @@ import { ClientOverviewSection } from "@/components/ClientOverviewSection";
 import { ClientProposalSection } from "@/components/ClientProposalSection";
 import { ClientVideosSection } from "@/components/ClientVideosSection";
 import { ClientDocumentsSection } from "@/components/ClientDocumentsSection";
+import { ClientMessagesSection } from "@/components/ClientMessagesSection";
 
 const PortalDetail = () => {
   return (
@@ -13,7 +14,7 @@ const PortalDetail = () => {
         <Route path="proposal" element={<ClientProposalSection />} />
         <Route path="videos" element={<ClientVideosSection />} />
         <Route path="documents" element={<ClientDocumentsSection />} />
-        <Route path="messages" element={<div className="text-[hsl(var(--dark-grey))]">Messages Section (Coming Soon)</div>} />
+        <Route path="messages" element={<ClientMessagesSection />} />
         <Route path="meetings" element={<div className="text-[hsl(var(--dark-grey))]">Meetings Section (Coming Soon)</div>} />
         <Route path="/" element={<Navigate to="overview" replace />} />
       </Routes>
