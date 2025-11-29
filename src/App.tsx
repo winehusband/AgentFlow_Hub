@@ -1,16 +1,37 @@
+import { useEffect } from "react";
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
-import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { BrowserRouter, Routes, Route } from "react-router-dom";
+import { QueryClient, QueryClientProvider, useQueryClient } from "@tanstack/react-query";
+import { BrowserRouter, Routes, Route, useNavigate } from "react-router-dom";
 import Index from "./pages/Index";
 import Login from "./pages/Login";
 import HubList from "./pages/HubList";
 import HubDetail from "./pages/HubDetail";
 import PortalDetail from "./pages/PortalDetail";
 import NotFound from "./pages/NotFound";
+import { RequireStaff, RequireClient } from "./routes/guards";
+import { setUnauthorizedHandler } from "./services/api";
 
 const queryClient = new QueryClient();
+
+/**
+ * Registers the 401 handler to clear cache and redirect to login
+ * Must be inside BrowserRouter for useNavigate access
+ */
+function UnauthorizedHandler() {
+  const navigate = useNavigate();
+  const qc = useQueryClient();
+
+  useEffect(() => {
+    setUnauthorizedHandler(() => {
+      qc.clear();
+      navigate("/login", { replace: true });
+    });
+  }, [navigate, qc]);
+
+  return null;
+}
 
 const App = () => (
   <QueryClientProvider client={queryClient}>
@@ -18,12 +39,34 @@ const App = () => (
       <Toaster />
       <Sonner />
       <BrowserRouter>
+        <UnauthorizedHandler />
         <Routes>
           <Route path="/" element={<Index />} />
           <Route path="/login" element={<Login />} />
-          <Route path="/hubs" element={<HubList />} />
-          <Route path="/hub/*" element={<HubDetail />} />
-          <Route path="/portal/*" element={<PortalDetail />} />
+          <Route
+            path="/hubs"
+            element={
+              <RequireStaff>
+                <HubList />
+              </RequireStaff>
+            }
+          />
+          <Route
+            path="/hub/:hubId/*"
+            element={
+              <RequireStaff>
+                <HubDetail />
+              </RequireStaff>
+            }
+          />
+          <Route
+            path="/portal/:hubId/*"
+            element={
+              <RequireClient>
+                <PortalDetail />
+              </RequireClient>
+            }
+          />
           {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
           <Route path="*" element={<NotFound />} />
         </Routes>

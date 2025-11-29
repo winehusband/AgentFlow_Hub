@@ -67,7 +67,7 @@ interface ApiError {
 **Login.tsx (lines 17-27)**:
 ```typescript
 // Hardcoded demo credentials
-if (email === "sarah@neverlandcreative.com" && password === "password123") {
+if (email === "sarah@whitmorelaw.co.uk" && password === "password123") {
   localStorage.setItem("userRole", "client");
   localStorage.setItem("userEmail", email);
   navigate("/portal/overview");
@@ -145,8 +145,8 @@ if (email === "sarah@neverlandcreative.com" && password === "password123") {
 
 Currently in ClientProposalSection.tsx (line 56-63):
 ```typescript
-if (!shareEmail.endsWith("@neverlandcreative.com")) {
-  toast({ title: "Invalid email", description: "You can only share with people at Neverland Creative" });
+if (!shareEmail.endsWith("@whitmorelaw.co.uk")) {
+  toast({ title: "Invalid email", description: "You can only share with people at Whitmore & Associates" });
   return;
 }
 ```
@@ -172,7 +172,7 @@ if (!shareEmail.endsWith("@neverlandcreative.com")) {
 
 ```typescript
 const mockHubs = [
-  { id: 1, companyName: "Client Example123", contactName: "Sarah Mitchell", status: "Active", lastActivity: "2 days ago" },
+  { id: 1, companyName: "Whitmore & Associates", contactName: "Sarah Mitchell", status: "Active", lastActivity: "2 days ago" },
   // ... 5 total mock hubs
 ];
 ```

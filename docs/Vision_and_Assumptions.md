@@ -138,7 +138,7 @@ The following features from the full vision are out of scope for v0.1:
 
 ### 4.3 Email Integration (Messages)
 
-**Assumption:** The Messages section shows a filtered view of Outlook emails to/from people associated with the hub. Filtering is based on email addresses or domain (e.g., all emails with @neverlandcreative.com appear in the Neverland hub).
+**Assumption:** The Messages section shows a filtered view of Outlook emails to/from people associated with the hub. Filtering is based on email addresses or domain (e.g., all emails with @whitmorelaw.co.uk appear in the Whitmore hub).
 
 **Sending from hub:** When AgentFlow staff send a message from the hub, it is sent as a real email via Outlook Graph API. The email appears in the recipient's inbox normally.
 
@@ -188,7 +188,7 @@ The following features from the full vision are out of scope for v0.1:
 
 **Permission levels:** When a client invites a colleague, they choose what the colleague can access: Full Access (everything they can see), Proposal Only, Documents Only, or specific items.
 
-**Domain restriction:** Clients can only share with people in their own email domain (e.g., @neverlandcreative.com). Attempts to share outside the domain are blocked with a clear error message.
+**Domain restriction:** Clients can only share with people in their own email domain (e.g., @whitmorelaw.co.uk). Attempts to share outside the domain are blocked with a clear error message.
 
 **Technical requirement:** Share links include a unique ID. When accessed, middleware checks: (1) user is authenticated via Microsoft, (2) user's email domain matches the hub's domain, (3) user has permission for this specific content. Access events are logged and surfaced as notifications to AgentFlow.
 

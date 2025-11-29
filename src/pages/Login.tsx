@@ -2,29 +2,17 @@ import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { useNavigate } from "react-router-dom";
 import { useState } from "react";
+import { useLogin } from "@/hooks";
 
 const Login = () => {
-  const navigate = useNavigate();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const { mutate: login, isPending, isError } = useLogin();
 
   const handleSignIn = (e: React.FormEvent) => {
     e.preventDefault();
-    
-    // Check credentials and route accordingly
-    if (email === "sarah@neverlandcreative.com" && password === "password123") {
-      localStorage.setItem("userRole", "client");
-      localStorage.setItem("userEmail", email);
-      navigate("/portal/overview");
-    } else if (email === "hamish@goagentflow.com" && password === "password123") {
-      localStorage.setItem("userRole", "staff");
-      localStorage.setItem("userEmail", email);
-      navigate("/hubs");
-    } else {
-      alert("Invalid credentials. Please use demo credentials.");
-    }
+    login({ email, password });
   };
 
   const fillDemoCredentials = (demoEmail: string, demoPassword: string) => {
@@ -118,11 +106,17 @@ const Login = () => {
                       required
                     />
                   </div>
-                  <Button 
+                  {isError && (
+                    <p className="text-sm text-red-600 text-center">
+                      Invalid credentials. Please use demo credentials.
+                    </p>
+                  )}
+                  <Button
                     type="submit"
-                    className="w-full h-12 text-base font-semibold bg-[hsl(var(--soft-coral))] hover:bg-[hsl(var(--soft-coral))]/90 text-white shadow-md hover:shadow-lg transition-all duration-300"
+                    disabled={isPending}
+                    className="w-full h-12 text-base font-semibold bg-[hsl(var(--soft-coral))] hover:bg-[hsl(var(--soft-coral))]/90 text-white shadow-md hover:shadow-lg transition-all duration-300 disabled:opacity-60"
                   >
-                    Sign In
+                    {isPending ? "Signing in..." : "Sign In"}
                   </Button>
                 </form>
               </div>
@@ -150,13 +144,13 @@ const Login = () => {
               
               <div className="space-y-3">
                 {/* Client Demo */}
-                <Card 
+                <Card
                   className="p-4 cursor-pointer hover:border-[hsl(var(--gradient-blue))] hover:shadow-md transition-all duration-200"
-                  onClick={() => fillDemoCredentials("sarah@neverlandcreative.com", "password123")}
+                  onClick={() => fillDemoCredentials("sarah@whitmorelaw.co.uk", "password123")}
                 >
                   <div className="space-y-1">
                     <p className="text-sm font-semibold text-[hsl(var(--bold-royal-blue))]">Client Login</p>
-                    <p className="text-xs text-[hsl(var(--medium-grey))]">sarah@neverlandcreative.com</p>
+                    <p className="text-xs text-[hsl(var(--medium-grey))]">sarah@whitmorelaw.co.uk</p>
                     <p className="text-xs text-[hsl(var(--medium-grey))]">password123</p>
                   </div>
                 </Card>

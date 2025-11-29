@@ -126,8 +126,8 @@ All data is placeholder. Use realistic-looking fake data that demonstrates the U
 ```tsx
 // Good: Realistic placeholder
 const pitchHubs = [
-  { id: 1, name: "Neverland Creative", status: "Active", lastActivity: "2 hours ago" },
-  { id: 2, name: "Acme Corp", status: "Draft", lastActivity: "Yesterday" },
+  { id: 1, name: "Whitmore & Associates", status: "Active", lastActivity: "2 hours ago" },
+  { id: 2, name: "Hartley Grant Partners", status: "Draft", lastActivity: "Yesterday" },
 ];
 
 // Bad: Obviously fake

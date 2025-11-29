@@ -1,0 +1,232 @@
+/**
+ * Hub service
+ *
+ * Operations for hub list and hub management.
+ */
+
+import type {
+  Hub,
+  CreateHubRequest,
+  UpdateHubRequest,
+  HubOverview,
+  PortalConfig,
+  UpdatePortalConfigRequest,
+  PaginatedList,
+  PaginationParams,
+  ActivityFeedItem,
+} from "@/types";
+import { api, isMockApiEnabled, simulateDelay } from "./api";
+import { mockHubs, mockHubOverview, mockPortalConfig, mockActivityFeed } from "./mock-data";
+
+/**
+ * Get paginated list of hubs
+ */
+export async function getHubs(params?: PaginationParams): Promise<PaginatedList<Hub>> {
+  if (isMockApiEnabled()) {
+    await simulateDelay(300);
+
+    let filtered = [...mockHubs];
+
+    // Apply search filter
+    if (params?.search) {
+      const search = params.search.toLowerCase();
+      filtered = filtered.filter(
+        (h) =>
+          h.companyName.toLowerCase().includes(search) ||
+          h.contactName.toLowerCase().includes(search)
+      );
+    }
+
+    // Apply status filter
+    if (params?.filter) {
+      const [field, value] = params.filter.split(":");
+      if (field === "status" && value) {
+        filtered = filtered.filter((h) => h.status === value);
+      }
+    }
+
+    // Apply sorting
+    if (params?.sort) {
+      const [field, direction] = params.sort.split(":");
+      filtered.sort((a, b) => {
+        const aVal = a[field as keyof Hub];
+        const bVal = b[field as keyof Hub];
+        const cmp = String(aVal).localeCompare(String(bVal));
+        return direction === "desc" ? -cmp : cmp;
+      });
+    }
+
+    // Apply pagination
+    const page = params?.page || 1;
+    const pageSize = params?.pageSize || 20;
+    const start = (page - 1) * pageSize;
+    const items = filtered.slice(start, start + pageSize);
+
+    return {
+      items,
+      pagination: {
+        page,
+        pageSize,
+        totalItems: filtered.length,
+        totalPages: Math.ceil(filtered.length / pageSize),
+      },
+    };
+  }
+
+  const queryParams: Record<string, string> = {};
+  if (params?.page) queryParams.page = String(params.page);
+  if (params?.pageSize) queryParams.pageSize = String(params.pageSize);
+  if (params?.sort) queryParams.sort = params.sort;
+  if (params?.filter) queryParams.filter = params.filter;
+  if (params?.search) queryParams.search = params.search;
+
+  return api.get<PaginatedList<Hub>>("/hubs", queryParams);
+}
+
+/**
+ * Get single hub by ID
+ */
+export async function getHub(hubId: string): Promise<Hub> {
+  if (isMockApiEnabled()) {
+    await simulateDelay(200);
+    const hub = mockHubs.find((h) => h.id === hubId);
+    if (!hub) throw new Error("Hub not found");
+    return hub;
+  }
+
+  return api.get<Hub>(`/hubs/${hubId}`);
+}
+
+/**
+ * Create a new hub
+ */
+export async function createHub(data: CreateHubRequest): Promise<Hub> {
+  if (isMockApiEnabled()) {
+    await simulateDelay(500);
+
+    const newHub: Hub = {
+      id: `hub-${Date.now()}`,
+      companyName: data.companyName,
+      contactName: data.contactName,
+      contactEmail: data.contactEmail,
+      status: "draft",
+      createdAt: new Date().toISOString(),
+      updatedAt: new Date().toISOString(),
+      lastActivity: new Date().toISOString(),
+      clientsInvited: 0,
+      lastVisit: null,
+      clientDomain: data.clientDomain || data.contactEmail.split("@")[1],
+    };
+
+    mockHubs.unshift(newHub);
+    return newHub;
+  }
+
+  return api.post<Hub>("/hubs", data);
+}
+
+/**
+ * Update hub details
+ */
+export async function updateHub(hubId: string, data: UpdateHubRequest): Promise<Hub> {
+  if (isMockApiEnabled()) {
+    await simulateDelay(300);
+
+    const index = mockHubs.findIndex((h) => h.id === hubId);
+    if (index === -1) throw new Error("Hub not found");
+
+    mockHubs[index] = { ...mockHubs[index], ...data, updatedAt: new Date().toISOString() };
+    return mockHubs[index];
+  }
+
+  return api.patch<Hub>(`/hubs/${hubId}`, data);
+}
+
+/**
+ * Get hub overview with alerts and stats
+ * Note: Uses /overview endpoint to keep hub details and dashboard data distinct
+ */
+export async function getHubOverview(hubId: string): Promise<HubOverview> {
+  if (isMockApiEnabled()) {
+    await simulateDelay(300);
+    return mockHubOverview;
+  }
+
+  return api.get<HubOverview>(`/hubs/${hubId}/overview`);
+}
+
+/**
+ * Update hub internal notes
+ */
+export async function updateHubNotes(hubId: string, notes: string): Promise<void> {
+  if (isMockApiEnabled()) {
+    await simulateDelay(200);
+    mockHubOverview.internalNotes = notes;
+    return;
+  }
+
+  return api.patch(`/hubs/${hubId}/notes`, { notes });
+}
+
+/**
+ * Get hub activity feed
+ */
+export async function getHubActivity(
+  hubId: string,
+  params?: PaginationParams
+): Promise<PaginatedList<ActivityFeedItem>> {
+  if (isMockApiEnabled()) {
+    await simulateDelay(200);
+    return {
+      items: mockActivityFeed,
+      pagination: { page: 1, pageSize: 20, totalItems: mockActivityFeed.length, totalPages: 1 },
+    };
+  }
+
+  const queryParams: Record<string, string> = {};
+  if (params?.page) queryParams.page = String(params.page);
+  if (params?.pageSize) queryParams.pageSize = String(params.pageSize);
+
+  return api.get<PaginatedList<ActivityFeedItem>>(`/hubs/${hubId}/activity`, queryParams);
+}
+
+/**
+ * Get portal configuration
+ */
+export async function getPortalConfig(hubId: string): Promise<PortalConfig> {
+  if (isMockApiEnabled()) {
+    await simulateDelay(200);
+    return mockPortalConfig;
+  }
+
+  return api.get<PortalConfig>(`/hubs/${hubId}/portal-config`);
+}
+
+/**
+ * Update portal configuration
+ */
+export async function updatePortalConfig(
+  hubId: string,
+  data: UpdatePortalConfigRequest
+): Promise<PortalConfig> {
+  if (isMockApiEnabled()) {
+    await simulateDelay(300);
+    Object.assign(mockPortalConfig, data);
+    return mockPortalConfig;
+  }
+
+  return api.patch<PortalConfig>(`/hubs/${hubId}/portal-config`, data);
+}
+
+/**
+ * Publish portal (make live to clients)
+ */
+export async function publishPortal(hubId: string): Promise<PortalConfig> {
+  if (isMockApiEnabled()) {
+    await simulateDelay(500);
+    mockPortalConfig.isPublished = true;
+    return mockPortalConfig;
+  }
+
+  return api.post<PortalConfig>(`/hubs/${hubId}/publish`);
+}

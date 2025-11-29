@@ -1,3 +1,4 @@
+import { useNavigate, useLocation, Link } from "react-router-dom";
 import { SidebarProvider, SidebarTrigger } from "@/components/ui/sidebar";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
@@ -18,6 +19,8 @@ import {
 } from "@/components/ui/sidebar";
 import { NavLink } from "./NavLink";
 import { Home, FileText, Play, FolderOpen, MessageSquare, Calendar, ClipboardList, Users } from "lucide-react";
+import { useCurrentUser, useLogout } from "@/hooks";
+import { useHubId } from "@/contexts/hub-context";
 
 interface ClientHubLayoutProps {
   children: React.ReactNode;
@@ -26,42 +29,46 @@ interface ClientHubLayoutProps {
 }
 
 const clientNavItems = [
-  { title: "Overview", url: "/portal/overview", icon: Home },
-  { title: "Proposal", url: "/portal/proposal", icon: FileText },
-  { title: "Videos", url: "/portal/videos", icon: Play, badge: "3" },
-  { title: "Documents", url: "/portal/documents", icon: FolderOpen, badge: "5" },
-  { title: "Messages", url: "/portal/messages", icon: MessageSquare, badge: "2" },
-  { title: "Meetings", url: "/portal/meetings", icon: Calendar },
-  { title: "Questionnaire", url: "/portal/questionnaire", icon: ClipboardList, badge: "1" },
-  { title: "People", url: "/portal/people", icon: Users },
+  { title: "Overview", path: "overview", icon: Home },
+  { title: "Proposal", path: "proposal", icon: FileText },
+  { title: "Videos", path: "videos", icon: Play },
+  { title: "Documents", path: "documents", icon: FolderOpen },
+  { title: "Messages", path: "messages", icon: MessageSquare },
+  { title: "Meetings", path: "meetings", icon: Calendar },
+  { title: "Questionnaire", path: "questionnaire", icon: ClipboardList },
+  { title: "People", path: "people", icon: Users },
 ];
 
 function ClientSidebar() {
+  const hubId = useHubId();
+  const location = useLocation();
+
   return (
     <Sidebar className="border-r bg-[hsl(var(--deep-navy))] pt-16" collapsible="icon">
       <SidebarContent>
         <SidebarGroup>
           <SidebarGroupContent>
             <SidebarMenu>
-              {clientNavItems.map((item) => (
-                <SidebarMenuItem key={item.title}>
-                  <SidebarMenuButton asChild>
-                    <NavLink 
-                      to={item.url}
-                      className="text-white/70 hover:text-white hover:bg-white/10 transition-colors"
-                      activeClassName="text-white bg-[hsl(var(--gradient-purple))]/30 border-l-4 border-[hsl(var(--soft-coral))]"
-                    >
-                      <item.icon className="h-5 w-5" />
-                      <span className="flex-1">{item.title}</span>
-                      {item.badge && (
-                        <Badge className="bg-[hsl(var(--soft-coral))] text-white text-xs">
-                          {item.badge}
-                        </Badge>
-                      )}
-                    </NavLink>
-                  </SidebarMenuButton>
-                </SidebarMenuItem>
-              ))}
+              {clientNavItems.map((item) => {
+                const url = `/portal/${hubId}/${item.path}`;
+                const isActive = location.pathname.startsWith(url) ||
+                  (item.path === "overview" && location.pathname === `/portal/${hubId}`);
+                return (
+                  <SidebarMenuItem key={item.title}>
+                    <SidebarMenuButton asChild>
+                      <NavLink
+                        to={url}
+                        className={`text-white/70 hover:text-white hover:bg-white/10 transition-colors ${
+                          isActive ? "text-white bg-[hsl(var(--gradient-purple))]/30 border-l-4 border-[hsl(var(--soft-coral))]" : ""
+                        }`}
+                      >
+                        <item.icon className="h-5 w-5" />
+                        <span className="flex-1">{item.title}</span>
+                      </NavLink>
+                    </SidebarMenuButton>
+                  </SidebarMenuItem>
+                );
+              })}
             </SidebarMenu>
           </SidebarGroupContent>
         </SidebarGroup>
@@ -70,18 +77,23 @@ function ClientSidebar() {
   );
 }
 
-export function ClientHubLayout({ 
-  children, 
+export function ClientHubLayout({
+  children,
   hubName = "Your AgentFlow Hub",
   viewMode = "client"
 }: ClientHubLayoutProps) {
-  const userEmail = localStorage.getItem("userEmail") || "";
-  const initials = userEmail.split('@')[0].substring(0, 2).toUpperCase();
+  const navigate = useNavigate();
+  const hubId = useHubId();
+  const { data: authData } = useCurrentUser();
+  const { mutate: logout } = useLogout();
+
+  const user = authData?.user;
+  const initials = user?.displayName
+    ? user.displayName.split(" ").map((n) => n[0]).join("").toUpperCase().slice(0, 2)
+    : "??";
 
   const handleSignOut = () => {
-    localStorage.removeItem("userRole");
-    localStorage.removeItem("userEmail");
-    window.location.href = "/login";
+    logout();
   };
 
   return (
@@ -91,11 +103,11 @@ export function ClientHubLayout({
         <header className="sticky top-0 z-50 flex h-16 items-center justify-between border-b bg-white px-4 md:px-6">
           <div className="flex items-center gap-4">
             <SidebarTrigger className="md:hidden" />
-            <img 
-              src="https://www.goagentflow.com/assets/images/AgentFlowLogo.svg" 
-              alt="AgentFlow" 
+            <img
+              src="https://www.goagentflow.com/assets/images/AgentFlowLogo.svg"
+              alt="AgentFlow"
               className="h-8 cursor-pointer hidden md:block"
-              onClick={() => window.location.href = '/portal/overview'}
+              onClick={() => navigate(`/portal/${hubId}/overview`)}
             />
           </div>
           
@@ -118,7 +130,7 @@ export function ClientHubLayout({
               </DropdownMenuTrigger>
               <DropdownMenuContent align="end" className="bg-white">
                 <DropdownMenuItem className="text-[hsl(var(--medium-grey))] cursor-default">
-                  {userEmail}
+                  {user?.email ?? "Loading..."}
                 </DropdownMenuItem>
                 <DropdownMenuItem onClick={handleSignOut}>
                   Sign out
@@ -142,12 +154,12 @@ export function ClientHubLayout({
                 <p className="text-sm text-[hsl(var(--dark-grey))]">
                   Questions? We're here to help.
                 </p>
-                <a 
-                  href="/portal/messages" 
+                <Link
+                  to={`/portal/${hubId}/messages`}
                   className="text-sm text-[hsl(var(--bold-royal-blue))] hover:underline"
                 >
                   Send a Message
-                </a>
+                </Link>
                 <div className="pt-4">
                   <img 
                     src="https://www.goagentflow.com/assets/images/AgentFlowLogo.svg" 

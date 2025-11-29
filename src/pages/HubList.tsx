@@ -1,3 +1,5 @@
+import { useState } from "react";
+import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card } from "@/components/ui/card";
@@ -8,62 +10,72 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
-import { Search, Plus, ChevronDown } from "lucide-react";
+import { Search, Plus, ChevronDown, Loader2 } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
+import { useHubs, useCurrentUser, useLogout } from "@/hooks";
+import type { HubStatus } from "@/types";
 
-// Mock data for placeholder hubs
-const mockHubs = [
-  {
-    id: 1,
-    companyName: "Client Example123",
-    contactName: "Sarah Mitchell",
-    status: "Active",
-    lastActivity: "2 days ago",
-  },
-  {
-    id: 2,
-    companyName: "TechCorp Solutions",
-    contactName: "James Chen",
-    status: "Active",
-    lastActivity: "5 days ago",
-  },
-  {
-    id: 3,
-    companyName: "Riverside Marketing",
-    contactName: "Emma Williams",
-    status: "Won",
-    lastActivity: "1 week ago",
-  },
-  {
-    id: 4,
-    companyName: "Blue Sky Agency",
-    contactName: "Tom Anderson",
-    status: "Lost",
-    lastActivity: "2 weeks ago",
-  },
-  {
-    id: 5,
-    companyName: "Summit Ventures",
-    contactName: "Maria Garcia",
-    status: "Active",
-    lastActivity: "1 day ago",
-  },
-];
-
-const getStatusColor = (status: string) => {
+const getStatusColor = (status: HubStatus) => {
   switch (status) {
-    case "Active":
+    case "active":
       return "bg-sage-green text-white";
-    case "Won":
+    case "won":
       return "bg-gradient-blue text-white";
-    case "Lost":
+    case "lost":
       return "bg-medium-grey text-white";
+    case "draft":
+      return "bg-muted text-muted-foreground";
     default:
       return "bg-muted text-muted-foreground";
   }
 };
 
+const formatStatus = (status: HubStatus) => {
+  return status.charAt(0).toUpperCase() + status.slice(1);
+};
+
+const formatLastActivity = (date: string) => {
+  const now = new Date();
+  const activityDate = new Date(date);
+  const diffMs = now.getTime() - activityDate.getTime();
+  const diffDays = Math.floor(diffMs / (1000 * 60 * 60 * 24));
+
+  if (diffDays === 0) return "Today";
+  if (diffDays === 1) return "1 day ago";
+  if (diffDays < 7) return `${diffDays} days ago`;
+  if (diffDays < 14) return "1 week ago";
+  return `${Math.floor(diffDays / 7)} weeks ago`;
+};
+
 const HubList = () => {
+  const navigate = useNavigate();
+  const [searchQuery, setSearchQuery] = useState("");
+  const [statusFilter, setStatusFilter] = useState<HubStatus | "all">("all");
+
+  const { data: hubsData, isLoading, isError } = useHubs();
+  const { data: authData } = useCurrentUser();
+  const { mutate: logout } = useLogout();
+
+  const user = authData?.user;
+  const userInitials = user?.displayName
+    ? user.displayName
+        .split(" ")
+        .map((n) => n[0])
+        .join("")
+        .toUpperCase()
+        .slice(0, 2)
+    : "??";
+
+  // Filter hubs based on search and status
+  const filteredHubs = hubsData?.items.filter((hub) => {
+    const matchesSearch =
+      searchQuery === "" ||
+      hub.companyName.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      hub.contactName.toLowerCase().includes(searchQuery.toLowerCase());
+    const matchesStatus = statusFilter === "all" || hub.status === statusFilter;
+    return matchesSearch && matchesStatus;
+  });
+
   return (
     <div className="min-h-screen bg-background">
       {/* Header */}
@@ -87,11 +99,11 @@ const HubList = () => {
               <button className="flex items-center gap-2 hover:opacity-80 transition-opacity">
                 <Avatar className="h-9 w-9">
                   <AvatarFallback className="bg-gradient-blue text-white text-sm font-medium">
-                    JD
+                    {userInitials}
                   </AvatarFallback>
                 </Avatar>
                 <span className="text-sm font-medium text-dark-grey hidden sm:inline">
-                  John Doe
+                  {user?.displayName ?? "Loading..."}
                 </span>
                 <ChevronDown className="h-4 w-4 text-medium-grey" />
               </button>
@@ -99,7 +111,10 @@ const HubList = () => {
             <DropdownMenuContent align="end" className="w-48 bg-white z-50">
               <DropdownMenuItem className="cursor-pointer">Profile</DropdownMenuItem>
               <DropdownMenuItem className="cursor-pointer">Settings</DropdownMenuItem>
-              <DropdownMenuItem className="cursor-pointer text-destructive">
+              <DropdownMenuItem
+                className="cursor-pointer text-destructive"
+                onClick={() => logout()}
+              >
                 Sign Out
               </DropdownMenuItem>
             </DropdownMenuContent>
@@ -127,6 +142,8 @@ const HubList = () => {
             <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-5 w-5 text-medium-grey" />
             <Input
               placeholder="Search hubs..."
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
               className="pl-10 h-12 bg-white border-border focus:ring-gradient-blue focus:border-gradient-blue"
             />
           </div>
@@ -138,49 +155,81 @@ const HubList = () => {
                 variant="outline"
                 className="h-12 px-6 bg-white border-border hover:bg-muted w-full sm:w-auto"
               >
-                All Hubs
+                {statusFilter === "all" ? "All Hubs" : formatStatus(statusFilter)}
                 <ChevronDown className="ml-2 h-4 w-4" />
               </Button>
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end" className="w-40 bg-white z-50">
-              <DropdownMenuItem className="cursor-pointer">All</DropdownMenuItem>
-              <DropdownMenuItem className="cursor-pointer">Active</DropdownMenuItem>
-              <DropdownMenuItem className="cursor-pointer">Won</DropdownMenuItem>
-              <DropdownMenuItem className="cursor-pointer">Lost</DropdownMenuItem>
+              <DropdownMenuItem className="cursor-pointer" onClick={() => setStatusFilter("all")}>
+                All
+              </DropdownMenuItem>
+              <DropdownMenuItem className="cursor-pointer" onClick={() => setStatusFilter("active")}>
+                Active
+              </DropdownMenuItem>
+              <DropdownMenuItem className="cursor-pointer" onClick={() => setStatusFilter("won")}>
+                Won
+              </DropdownMenuItem>
+              <DropdownMenuItem className="cursor-pointer" onClick={() => setStatusFilter("lost")}>
+                Lost
+              </DropdownMenuItem>
             </DropdownMenuContent>
           </DropdownMenu>
         </div>
 
+        {/* Loading State */}
+        {isLoading && (
+          <div className="flex items-center justify-center py-12">
+            <Loader2 className="h-8 w-8 animate-spin text-gradient-blue" />
+            <span className="ml-2 text-medium-grey">Loading hubs...</span>
+          </div>
+        )}
+
+        {/* Error State */}
+        {isError && (
+          <div className="text-center py-12">
+            <p className="text-destructive">Failed to load hubs. Please try again.</p>
+          </div>
+        )}
+
+        {/* Empty State */}
+        {!isLoading && !isError && filteredHubs?.length === 0 && (
+          <div className="text-center py-12">
+            <p className="text-medium-grey">No hubs found matching your criteria.</p>
+          </div>
+        )}
+
         {/* Hub Cards Grid */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {mockHubs.map((hub) => (
-            <Card
-              key={hub.id}
-              className="p-6 bg-white border-0 shadow-md hover:shadow-xl transition-all duration-300 cursor-pointer group hover:-translate-y-1"
-              onClick={() => window.location.href = '/hub/overview'}
-            >
-              <div className="space-y-3">
-                {/* Company Name */}
-                <h3 className="text-xl font-bold text-dark-grey group-hover:text-royal-blue transition-colors">
-                  {hub.companyName}
-                </h3>
+        {!isLoading && !isError && filteredHubs && filteredHubs.length > 0 && (
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            {filteredHubs.map((hub) => (
+              <Card
+                key={hub.id}
+                className="p-6 bg-white border-0 shadow-md hover:shadow-xl transition-all duration-300 cursor-pointer group hover:-translate-y-1"
+                onClick={() => navigate(`/hub/${hub.id}/overview`)}
+              >
+                <div className="space-y-3">
+                  {/* Company Name */}
+                  <h3 className="text-xl font-bold text-dark-grey group-hover:text-royal-blue transition-colors">
+                    {hub.companyName}
+                  </h3>
 
-                {/* Contact Name */}
-                <p className="text-medium-grey text-sm">{hub.contactName}</p>
+                  {/* Contact Name */}
+                  <p className="text-medium-grey text-sm">{hub.contactName}</p>
 
-                {/* Status Badge */}
-                <Badge className={`${getStatusColor(hub.status)} px-3 py-1 text-xs font-medium`}>
-                  {hub.status}
-                </Badge>
+                  {/* Status Badge */}
+                  <Badge className={`${getStatusColor(hub.status)} px-3 py-1 text-xs font-medium`}>
+                    {formatStatus(hub.status)}
+                  </Badge>
 
-                {/* Last Activity */}
-                <p className="text-medium-grey text-xs pt-2">
-                  Last activity: {hub.lastActivity}
-                </p>
-              </div>
-            </Card>
-          ))}
-        </div>
+                  {/* Last Activity */}
+                  <p className="text-medium-grey text-xs pt-2">
+                    Last activity: {formatLastActivity(hub.lastActivity)}
+                  </p>
+                </div>
+              </Card>
+            ))}
+          </div>
+        )}
       </main>
     </div>
   );

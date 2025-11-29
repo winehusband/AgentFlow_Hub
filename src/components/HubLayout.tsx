@@ -1,3 +1,4 @@
+import { useNavigate } from "react-router-dom";
 import { SidebarProvider, SidebarTrigger } from "@/components/ui/sidebar";
 import { HubSidebar } from "./HubSidebar";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
@@ -8,6 +9,7 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import { useCurrentUser, useLogout } from "@/hooks";
 
 interface HubLayoutProps {
   children: React.ReactNode;
@@ -15,18 +17,22 @@ interface HubLayoutProps {
   viewMode?: "internal" | "client";
 }
 
-export function HubLayout({ 
-  children, 
-  hubName = "Client Example123 Hub",
+export function HubLayout({
+  children,
+  hubName = "Whitmore & Associates Hub",
   viewMode = "internal"
 }: HubLayoutProps) {
-  const userEmail = localStorage.getItem("userEmail") || "";
-  const initials = userEmail ? userEmail.split('@')[0].substring(0, 2).toUpperCase() : "JD";
+  const navigate = useNavigate();
+  const { data: authData } = useCurrentUser();
+  const { mutate: logout } = useLogout();
+
+  const user = authData?.user;
+  const initials = user?.displayName
+    ? user.displayName.split(" ").map((n) => n[0]).join("").toUpperCase().slice(0, 2)
+    : "??";
 
   const handleSignOut = () => {
-    localStorage.removeItem("userRole");
-    localStorage.removeItem("userEmail");
-    window.location.href = "/login";
+    logout();
   };
 
   return (
@@ -36,11 +42,11 @@ export function HubLayout({
         <header className="sticky top-0 z-50 flex h-16 items-center justify-between border-b bg-white px-4 md:px-6">
           <div className="flex items-center gap-4">
             <SidebarTrigger className="md:hidden" />
-            <img 
-              src="https://www.goagentflow.com/assets/images/AgentFlowLogo.svg" 
-              alt="AgentFlow" 
+            <img
+              src="https://www.goagentflow.com/assets/images/AgentFlowLogo.svg"
+              alt="AgentFlow"
               className="h-8 cursor-pointer hidden md:block"
-              onClick={() => window.location.href = '/hubs'}
+              onClick={() => navigate("/hubs")}
             />
           </div>
           
@@ -70,7 +76,7 @@ export function HubLayout({
               </DropdownMenuTrigger>
               <DropdownMenuContent align="end" className="bg-white">
                 <DropdownMenuItem className="text-[hsl(var(--medium-grey))] cursor-default">
-                  {userEmail}
+                  {user?.email ?? "Loading..."}
                 </DropdownMenuItem>
                 <DropdownMenuItem onClick={handleSignOut}>
                   Sign out

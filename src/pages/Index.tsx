@@ -1,15 +1,7 @@
-import { useNavigate } from "react-router-dom";
-import { useEffect } from "react";
+import { RedirectByRole } from "@/routes/guards";
 
 const Index = () => {
-  const navigate = useNavigate();
-
-  useEffect(() => {
-    // Redirect to login page on mount
-    navigate("/login");
-  }, [navigate]);
-
-  return null;
+  return <RedirectByRole />;
 };
 
 export default Index;

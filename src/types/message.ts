@@ -1,0 +1,108 @@
+/**
+ * Message types - email thread management via Microsoft Graph
+ *
+ * Messages are scoped to hubs using email category labels (AgentFlow-Hub:{hubId})
+ * The middleware handles OBO flow to access Graph API
+ *
+ * Split into Summary (for list views) and Detail (with full messages) for performance.
+ */
+
+import type { EntityId, ISODateString } from "./common";
+
+// Thread summary for list views (lighter payload)
+export interface MessageThreadSummary {
+  id: EntityId;
+  hubId: EntityId;
+  subject: string;
+  participants: ThreadParticipant[];
+  lastMessageAt: ISODateString;
+  lastMessagePreview: string;
+  messageCount: number;
+  isRead: boolean;
+  isArchived: boolean;
+  hasTeamNotes: boolean;
+}
+
+// Full thread detail with messages
+export interface MessageThreadDetail {
+  id: EntityId;
+  hubId: EntityId;
+  subject: string;
+  participants: ThreadParticipant[];
+  lastMessageAt: ISODateString;
+  lastMessagePreview: string;
+  messageCount: number;
+  isRead: boolean;
+  isArchived: boolean;
+  teamNotes: string | null; // Internal notes stored in backend, not Graph
+  messages: Message[];
+}
+
+// Thread participant
+export interface ThreadParticipant {
+  email: string;
+  name: string;
+  isClient: boolean;
+}
+
+// Individual email message
+export interface Message {
+  id: EntityId;
+  threadId: EntityId;
+  from: MessageSender;
+  to: MessageRecipient[];
+  cc: MessageRecipient[];
+  subject: string;
+  bodyPreview: string;
+  bodyHtml: string;
+  sentAt: ISODateString;
+  isRead: boolean;
+  attachments: MessageAttachment[];
+}
+
+export interface MessageSender {
+  email: string;
+  name: string;
+}
+
+export interface MessageRecipient {
+  email: string;
+  name: string;
+}
+
+// Email attachment
+export interface MessageAttachment {
+  id: EntityId;
+  name: string;
+  contentType: string;
+  size: number;
+  downloadUrl: string;
+}
+
+// Send message request
+export interface SendMessageRequest {
+  threadId?: EntityId; // If replying to existing thread
+  to: string[]; // Email addresses
+  cc?: string[];
+  subject: string;
+  bodyHtml: string;
+  attachments?: File[];
+}
+
+// Update team notes request
+export interface UpdateTeamNotesRequest {
+  threadId: EntityId;
+  notes: string;
+}
+
+// Archive thread request
+export interface ArchiveThreadRequest {
+  threadId: EntityId;
+  archive: boolean;
+}
+
+// Thread filter params
+export interface MessageFilterParams {
+  isArchived?: boolean;
+  isRead?: boolean;
+}

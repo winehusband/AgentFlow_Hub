@@ -7,11 +7,18 @@ import { DocumentsSection } from "@/components/DocumentsSection";
 import { MessagesSection } from "@/components/MessagesSection";
 import { MeetingsSection } from "@/components/MeetingsSection";
 import { QuestionnaireSection } from "@/components/QuestionnaireSection";
-import { useLocation } from "react-router-dom";
+import { useLocation, useParams, Navigate } from "react-router-dom";
+import { HubProvider } from "@/contexts/hub-context";
 
 export default function HubDetail() {
+  const { hubId } = useParams<{ hubId: string }>();
   const location = useLocation();
   const path = location.pathname;
+
+  // Guard: hubId is required
+  if (!hubId) {
+    return <Navigate to="/hubs" replace />;
+  }
 
   const renderSection = () => {
     if (path.includes('/client-portal')) return <ClientPortalSection />;
@@ -25,8 +32,10 @@ export default function HubDetail() {
   };
 
   return (
-    <HubLayout>
-      {renderSection()}
-    </HubLayout>
+    <HubProvider hubId={hubId}>
+      <HubLayout>
+        {renderSection()}
+      </HubLayout>
+    </HubProvider>
   );
 }
